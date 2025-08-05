@@ -5,13 +5,14 @@ import type { Pool } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Server, AlertTriangle } from "lucide-react";
+import { HardDrive, Server, AlertTriangle, Send } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 export default function Home() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [telegramStatus, setTelegramStatus] = useState("Connected");
 
   useEffect(() => {
     // Simulate fetching data
@@ -80,10 +81,11 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Pools" value={pools.length} icon={Server} />
         <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} />
         <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} />
+        <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} />
       </div>
 
       <Card>
