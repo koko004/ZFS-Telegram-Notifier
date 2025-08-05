@@ -18,6 +18,7 @@ export const mockPools: Pool[] = [
             model: 'Samsung 970 EVO Plus 500GB',
             status: 'online',
             size: 500,
+            temperature: 42,
             errors: { read: 0, write: 0, checksum: 0 },
             smartData: 'SMART Self-test log structure revision number 1\nNum  Test_Description    Status                  Remaining  LifeTime(hours)  LBA_of_first_error\n# 1  Short offline       Completed without error       00%      1105         -'
           },
@@ -27,6 +28,7 @@ export const mockPools: Pool[] = [
             model: 'Samsung 970 EVO Plus 500GB',
             status: 'online',
             size: 500,
+            temperature: 45,
             errors: { read: 0, write: 0, checksum: 0 },
             smartData: 'SMART Self-test log structure revision number 1\nNum  Test_Description    Status                  Remaining  LifeTime(hours)  LBA_of_first_error\n# 1  Short offline       Completed without error       00%      1108         -'
           },
@@ -56,6 +58,7 @@ export const mockPools: Pool[] = [
             model: 'WDC WD40EFRX-68N32N0',
             status: 'online',
             size: 4000,
+            temperature: 35,
             errors: { read: 0, write: 0, checksum: 0 },
             smartData: 'Device Model: WDC WD40EFRX-68N32N0\nSerial Number: WD-WCC7K4YFXXXX\n197 Current_Pending_Sector  0x0032   200   200   000    Old_age   Always       -       0\n198 Offline_Uncorrectable 0x0030   100   253   000    Old_age   Offline      -       0'
           },
@@ -65,6 +68,7 @@ export const mockPools: Pool[] = [
             model: 'WDC WD40EFRX-68N32N0',
             status: 'degraded',
             size: 4000,
+            temperature: 58,
             errors: { read: 12, write: 0, checksum: 4 },
             smartData: 'Device Model: WDC WD40EFRX-68N32N0\nSerial Number: WD-WCC7K4YFYYYY\n197 Current_Pending_Sector  0x0032   200   198   000    Old_age   Always       -       12\n198 Offline_Uncorrectable 0x0030   100   253   000    Old_age   Offline      -       4'
           },
@@ -74,6 +78,7 @@ export const mockPools: Pool[] = [
             model: 'WDC WD40EFRX-68N32N0',
             status: 'online',
             size: 4000,
+            temperature: 36,
             errors: { read: 0, write: 0, checksum: 0 },
             smartData: 'Device Model: WDC WD40EFRX-68N32N0\nSerial Number: WD-WCC7K4YFZZZZ\n197 Current_Pending_Sector  0x0032   200   200   000    Old_age   Always       -       0\n198 Offline_Uncorrectable 0x0030   100   253   000    Old_age   Offline      -       0'
           },
@@ -107,6 +112,7 @@ export const mockPools: Pool[] = [
                     model: 'Seagate ST2000DM008',
                     status: 'online',
                     size: 2000,
+                    temperature: 40,
                     errors: { read: 0, write: 0, checksum: 0 },
                 },
                 {
@@ -115,6 +121,7 @@ export const mockPools: Pool[] = [
                     model: 'Seagate ST2000DM008',
                     status: 'faulted',
                     size: 2000,
+                    temperature: 75,
                     errors: { read: 512, write: 256, checksum: 128 },
                 }
             ]

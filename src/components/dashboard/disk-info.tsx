@@ -6,7 +6,7 @@ import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database, FileText } from "lucide-react";
+import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database, FileText, Thermometer } from "lucide-react";
 import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
@@ -91,21 +91,24 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                 {disk.size ? formatBytes(disk.size) : "N/A"}
             </div>
         </div>
+        <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center gap-2 font-medium">
+                <Thermometer className="h-4 w-4 text-muted-foreground" />
+                Temperature
+            </div>
+            <div className="font-bold text-foreground">
+                {disk.temperature ? `${disk.temperature}°C` : "N/A"}
+            </div>
+        </div>
         <div className="rounded-lg border p-3">
-            <div className="font-medium mb-2">Errors</div>
+            <div className="font-medium mb-2 flex justify-between items-center">
+                <span>Errors</span>
+                <span className="text-xs text-muted-foreground">R/W/C</span>
+            </div>
             <div className="grid grid-cols-3 gap-2 text-sm text-center">
-                <div>
-                    <div className="text-muted-foreground">Read</div>
-                    <div className="font-bold text-foreground">{disk.errors.read}</div>
-                </div>
-                <div>
-                    <div className="text-muted-foreground">Write</div>
-                    <div className="font-bold text-foreground">{disk.errors.write}</div>
-                </div>
-                <div>
-                    <div className="text-muted-foreground">Checksum</div>
-                    <div className="font-bold text-foreground">{disk.errors.checksum}</div>
-                </div>
+                <div className="font-bold text-foreground">{disk.errors.read}</div>
+                <div className="font-bold text-foreground">{disk.errors.write}</div>
+                <div className="font-bold text-foreground">{disk.errors.checksum}</div>
             </div>
         </div>
         
@@ -132,7 +135,7 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                     View SMART Data
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>SMART Data for {disk.name}</DialogTitle>
                 </DialogHeader>

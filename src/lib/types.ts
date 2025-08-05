@@ -12,6 +12,7 @@ export interface Disk {
     checksum: number;
   };
   size?: number; // in GB
+  temperature?: number; // in Celsius
   smartData?: string;
   smartAnalysis?: string;
 }
