@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, createRef, RefObject } from "react";
-import type { Pool, Disk } from "@/lib/types";
+import type { Pool, Disk, PoolStatus } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { detectErrorAnomaly } from "@/ai/flows/error-anomaly-detection";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const statusVariantMap: { [key in Pool["status"]]: "default" | "destructive" | "warning" } = {
+const statusVariantMap: { [key in PoolStatus]: "default" | "destructive" | "warning" } = {
   online: "default",
   degraded: "warning",
   faulted: "destructive",
 };
+
+const statusDescriptions: { [key in PoolStatus]: string } = {
+    online: "The pool is healthy and operating normally. All vdevs and disks are online.",
+    degraded: "The pool is still operational, but one or more devices have failed. Data redundancy is compromised. The failed device should be replaced as soon as possible.",
+    faulted: "The pool is offline and cannot be accessed. This is a critical error, often due to multiple disk failures beyond the redundancy level of the pool. Immediate action is required to prevent data loss.",
+};
+
 
 export function PoolDetails({ poolId }: { poolId: string }) {
   const [pool, setPool] = useState<Pool | null>(null);
@@ -118,10 +127,18 @@ export function PoolDetails({ poolId }: { poolId: string }) {
                 Overall status of the ZFS pool.
               </CardDescription>
             </div>
-            <Badge variant={statusVariantMap[pool.status]} className="text-base capitalize">
-                {pool.status === 'online' ? <ShieldCheck className="mr-2 h-4 w-4" /> : <AlertCircle className="mr-2 h-4 w-4" />}
-                {pool.status}
-            </Badge>
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Badge variant={statusVariantMap[pool.status]} className="text-base capitalize cursor-pointer">
+                        {pool.status === 'online' ? <ShieldCheck className="mr-2 h-4 w-4" /> : <AlertCircle className="mr-2 h-4 w-4" />}
+                        {pool.status}
+                    </Badge>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="end" className="w-auto max-w-sm">
+                    <p className="font-bold capitalize">{pool.status}</p>
+                    <p>{statusDescriptions[pool.status]}</p>
+                </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
         <Separator />
