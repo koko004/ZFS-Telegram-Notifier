@@ -6,9 +6,9 @@ import type { Pool, PoolStatus, DiskStatus } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Server, AlertTriangle, Send, MemoryStick, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { HardDrive, Server, AlertTriangle, Send, MemoryStick, ShieldCheck, ShieldAlert, ShieldX, Thermometer } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -27,7 +27,8 @@ export default function Home() {
     failedDisks, 
     diskTypes,
     poolStatusCounts,
-    failedDiskStatus
+    failedDiskStatus,
+    diskTemperatures
   } = useMemo(() => {
     if (isLoading || pools.length === 0) {
       return { 
@@ -35,7 +36,8 @@ export default function Home() {
         failedDisks: 0, 
         diskTypes: { nvme: 0, hdd: 0 },
         poolStatusCounts: { online: 0, degraded: 0, faulted: 0 },
-        failedDiskStatus: { degraded: 0, faulted: 0, offline: 0, unavailable: 0 }
+        failedDiskStatus: { degraded: 0, faulted: 0, offline: 0, unavailable: 0 },
+        diskTemperatures: []
       };
     }
 
@@ -61,13 +63,18 @@ export default function Home() {
         return acc;
     }, {} as Record<Exclude<DiskStatus, 'online'>, number>);
 
+    const diskTemperatures = allDisks
+        .filter(d => d.temperature !== undefined)
+        .map(d => ({ name: d.name, temperature: d.temperature as number, fill: "hsl(var(--chart-1))" }));
+
 
     return { 
         totalDisks: allDisks.length, 
         failedDisks: failedDisksList.length, 
         diskTypes,
         poolStatusCounts,
-        failedDiskStatus
+        failedDiskStatus,
+        diskTemperatures
     };
   }, [pools, isLoading]);
 
@@ -88,6 +95,10 @@ export default function Home() {
       label: 'HDD',
       color: 'hsl(var(--chart-2))',
     },
+    temperature: {
+        label: 'Temperature (°C)',
+        color: 'hsl(var(--chart-1))',
+    }
   };
 
   const StatCard = ({ title, value, icon: Icon, color, borderColor, children }: { title: string, value: string | number, icon: React.ElementType, color?: string, borderColor?: string, children?: React.ReactNode }) => (
@@ -123,7 +134,10 @@ export default function Home() {
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>
-        <Skeleton className="h-96" />
+        <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-96" />
+            <Skeleton className="h-96" />
+        </div>
       </div>
     );
   }
@@ -162,44 +176,75 @@ export default function Home() {
         <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color="text-blue-500" borderColor="border-blue-500" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Disk Types</CardTitle>
-          <CardDescription>Distribution of disk types across all pools.</CardDescription>
-        </CardHeader>
-        <CardContent className="pb-8">
-            <div className="h-[250px] w-full">
-               <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
-                  <PieChart>
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Pie
-                      data={diskTypeData}
-                      dataKey="value"
-                      nameKey="name"
-                      innerRadius={60}
-                      strokeWidth={5}
-                    >
-                       <Cell key="nvme" fill="hsl(var(--chart-1))" />
-                       <Cell key="hdd" fill="hsl(var(--chart-2))" />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-            </div>
-             <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground mt-4">
-                <div className="flex items-center">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-1))] mr-2" />
-                    NVMe: {diskTypes.nvme}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+            <CardHeader>
+            <CardTitle>Disk Types</CardTitle>
+            <CardDescription>Distribution of disk types across all pools.</CardDescription>
+            </CardHeader>
+            <CardContent className="pb-8">
+                <div className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
+                    <PieChart>
+                        <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel />}
+                        />
+                        <Pie
+                        data={diskTypeData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        strokeWidth={5}
+                        >
+                        <Cell key="nvme" fill="hsl(var(--chart-1))" />
+                        <Cell key="hdd" fill="hsl(var(--chart-2))" />
+                        </Pie>
+                    </PieChart>
+                    </ChartContainer>
                 </div>
-                <div className="flex items-center">
-                    <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-2))] mr-2" />
-                    HDD: {diskTypes.hdd}
+                <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground mt-4">
+                    <div className="flex items-center">
+                        <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-1))] mr-2" />
+                        NVMe: {diskTypes.nvme}
+                    </div>
+                    <div className="flex items-center">
+                        <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-2))] mr-2" />
+                        HDD: {diskTypes.hdd}
+                    </div>
                 </div>
-            </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Thermometer className="text-primary"/>
+                    Disk Temperatures
+                </CardTitle>
+                <CardDescription>Current temperatures of all disks.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="h-[250px] w-full">
+                    <ChartContainer config={chartConfig} className="h-full w-full">
+                        <BarChart data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                            <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
+                             <YAxis dataKey="temperature" unit="°C" />
+                            <ChartTooltip 
+                                content={<ChartTooltipContent 
+                                    labelKey="temperature" 
+                                    nameKey="name"
+                                    indicator="dot"
+                                />} 
+                            />
+                            <Bar dataKey="temperature" radius={4} />
+                        </BarChart>
+                    </ChartContainer>
+                </div>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+
+    
