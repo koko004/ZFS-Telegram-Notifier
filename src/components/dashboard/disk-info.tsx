@@ -115,7 +115,7 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
         )}
          {isAnalyzing && <Skeleton className="h-24 w-full" />}
       </CardContent>
-      <CardFooter className="flex gap-2">
+      <CardFooter className="flex flex-col gap-2">
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline" disabled={!disk.smartData} className="w-full">
