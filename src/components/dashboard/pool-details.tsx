@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, AlertTriangle, Layers, ShieldCheck, Siren } from "lucide-react";
+import { AlertCircle, AlertTriangle, Layers, ShieldCheck, Siren, Database } from "lucide-react";
 import { PoolTopology } from "./pool-topology";
 import { DiskInfo } from "./disk-info";
 import { LogViewer } from "./log-viewer";
@@ -17,6 +17,7 @@ import { detectErrorAnomaly } from "@/ai/flows/error-anomaly-detection";
 import { useToast } from "@/hooks/use-toast";
 import { useParams } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
 
 const statusVariantMap: { [key in PoolStatus]: "default" | "destructive" | "warning" } = {
   online: "default",
@@ -29,6 +30,15 @@ const statusDescriptions: { [key in PoolStatus]: string } = {
     degraded: "The pool is still operational, but one or more devices have failed. Data redundancy is compromised. The failed device should be replaced as soon as possible.",
     faulted: "The pool is offline and cannot be accessed. This is a critical error, often due to multiple disk failures beyond the redundancy level of the pool. Immediate action is required to prevent data loss.",
 };
+
+function formatBytes(bytes: number, decimals = 2) {
+    if (bytes === 0) return '0 GB';
+    const k = 1000;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['GB', 'TB', 'PB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 
 export function PoolDetails({ poolId }: { poolId: string }) {
@@ -91,6 +101,8 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     });
   };
 
+  const storageUsagePercentage = pool ? (pool.allocated / pool.size) * 100 : 0;
+
   if (isLoading) {
     return (
        <div className="space-y-6 p-4 md:p-6">
@@ -142,8 +154,19 @@ export function PoolDetails({ poolId }: { poolId: string }) {
           </div>
         </CardHeader>
         <Separator />
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-6">
             <PoolTopology vdevs={pool.vdevs} onDiskClick={scrollToDisk} />
+
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold font-headline">Storage Overview</h3>
+                <div className="space-y-2 rounded-lg border p-4">
+                    <Progress value={storageUsagePercentage} className="w-full" />
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Used: <span className="font-bold text-foreground">{formatBytes(pool.allocated)}</span> of {formatBytes(pool.size)}</span>
+                        <span>Free: <span className="font-bold text-foreground">{formatBytes(pool.free)}</span></span>
+                    </div>
+                </div>
+            </div>
         </CardContent>
         <CardFooter>
           <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors}>
@@ -177,4 +200,5 @@ export function PoolDetails({ poolId }: { poolId: string }) {
       <LogViewer logs={pool.logs} isLoading={isLoading} />
     </div>
   );
-}
+
+    
