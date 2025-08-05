@@ -45,6 +45,7 @@ export function AddPoolDialog() {
           </div>
         </div>
         <DialogFooter>
+          <Button variant="secondary">Test Connection</Button>
           <Button type="submit">Start Monitoring</Button>
         </DialogFooter>
       </DialogContent>
