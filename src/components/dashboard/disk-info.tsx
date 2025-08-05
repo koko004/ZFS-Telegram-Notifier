@@ -67,9 +67,8 @@ export function DiskInfo({ disk }: { disk: Disk }) {
           <span>{disk.name}</span>
           <Badge variant={statusVariantMap[disk.status]} className="ml-auto capitalize">{disk.status}</Badge>
         </CardTitle>
-        <CardDescription className="flex items-center gap-2">
-            <StatusIcon status={disk.status} />
-            <span>Status: {disk.status.charAt(0).toUpperCase() + disk.status.slice(1)}</span>
+        <CardDescription>
+          {disk.model}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

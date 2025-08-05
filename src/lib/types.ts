@@ -3,6 +3,7 @@ export type DiskStatus = 'online' | 'degraded' | 'faulted' | 'offline' | 'unavai
 export interface Disk {
   id: string;
   name: string;
+  model: string;
   status: DiskStatus;
   errors: {
     read: number;
