@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Sidebar } from '@/components/layout/sidebar';
 
 export const metadata: Metadata = {
-  title: 'ZFS Notifier',
+  title: 'ZFS Telegram Notifier',
   description: 'Monitor your ZFS pools with ease.',
 };
 

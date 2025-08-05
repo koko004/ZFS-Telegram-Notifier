@@ -7,7 +7,7 @@ export function Header() {
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 sm:px-6">
        <Link href="/" className="flex items-center gap-2 font-semibold font-headline">
           <Layers3 className="h-6 w-6 text-primary" />
-          <span>ZFS Notifier</span>
+          <span>ZFS Telegram Notifier</span>
        </Link>
        <div className="ml-auto">
         <ThemeToggle />
