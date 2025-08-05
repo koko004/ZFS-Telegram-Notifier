@@ -6,10 +6,12 @@ import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database } from "lucide-react";
+import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database, FileText } from "lucide-react";
 import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "../ui/scroll-area";
 
 const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "secondary" | "warning" } = {
   online: "default",
@@ -113,10 +115,28 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
         )}
          {isAnalyzing && <Skeleton className="h-24 w-full" />}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex gap-2">
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" disabled={!disk.smartData} className="w-full">
+                    <FileText />
+                    View SMART Data
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>SMART Data for {disk.name}</DialogTitle>
+                </DialogHeader>
+                <ScrollArea className="h-96 w-full rounded-md border bg-muted/30 p-4">
+                    <pre className="text-xs whitespace-pre-wrap font-code">
+                        {disk.smartData || "No SMART data available."}
+                    </pre>
+                </ScrollArea>
+            </DialogContent>
+        </Dialog>
         <Button onClick={handleAnalyze} disabled={isAnalyzing || !disk.smartData} className="w-full">
-            <Cpu className="mr-2 h-4 w-4" />
-            {isAnalyzing ? "Analyzing..." : "Analyze SMART Data"}
+            <Cpu />
+            {isAnalyzing ? "Analyzing..." : "Analyze"}
         </Button>
       </CardFooter>
     </Card>
