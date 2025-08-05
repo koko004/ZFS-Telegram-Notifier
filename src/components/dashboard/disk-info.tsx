@@ -91,12 +91,21 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                 {disk.size ? formatBytes(disk.size) : "N/A"}
             </div>
         </div>
-        <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="font-medium">Errors</div>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-                <span>Read: <span className="font-bold text-foreground">{disk.errors.read}</span></span>
-                <span>Write: <span className="font-bold text-foreground">{disk.errors.write}</span></span>
-                <span>Checksum: <span className="font-bold text-foreground">{disk.errors.checksum}</span></span>
+        <div className="rounded-lg border p-3">
+            <div className="font-medium mb-2">Errors</div>
+            <div className="grid grid-cols-3 gap-2 text-sm text-center">
+                <div>
+                    <div className="text-muted-foreground">Read</div>
+                    <div className="font-bold text-foreground">{disk.errors.read}</div>
+                </div>
+                <div>
+                    <div className="text-muted-foreground">Write</div>
+                    <div className="font-bold text-foreground">{disk.errors.write}</div>
+                </div>
+                <div>
+                    <div className="text-muted-foreground">Checksum</div>
+                    <div className="font-bold text-foreground">{disk.errors.checksum}</div>
+                </div>
             </div>
         </div>
         
