@@ -1,0 +1,138 @@
+"use client";
+
+import { useState } from "react";
+import type { Pool } from "@/lib/types";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { AlertCircle, AlertTriangle, Layers, ShieldCheck, Siren } from "lucide-react";
+import { PoolTopology } from "./pool-topology";
+import { DiskInfo } from "./disk-info";
+import { LogViewer } from "./log-viewer";
+import { Skeleton } from "@/components/ui/skeleton";
+import { detectErrorAnomaly } from "@/ai/flows/error-anomaly-detection";
+import { useToast } from "@/hooks/use-toast";
+
+const statusVariantMap: { [key in Pool["status"]]: "default" | "destructive" | "outline" } = {
+  online: "default",
+  degraded: "outline",
+  faulted: "destructive",
+};
+
+export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading: boolean }) {
+  const [errorAnalysis, setErrorAnalysis] = useState(pool?.errorAnalysis);
+  const [isAnalyzingErrors, setIsAnalyzingErrors] = useState(false);
+  const { toast } = useToast();
+
+  const handleAnalyzeErrors = async () => {
+    if (!pool || !pool.logs || pool.logs.length === 0) {
+      toast({
+        title: "Analysis Failed",
+        description: "No logs available for error analysis.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsAnalyzingErrors(true);
+    setErrorAnalysis(undefined);
+    try {
+      const result = await detectErrorAnomaly({
+        logs: pool.logs.join('\n'),
+        // Using a simple baseline for demonstration
+        baseline: 'No errors reported in the last 24 hours.',
+      });
+      setErrorAnalysis(result);
+    } catch (error) {
+      console.error("Error analysis failed:", error);
+      toast({
+        title: "Analysis Error",
+        description: "Could not analyze error logs. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzingErrors(false);
+    }
+  };
+
+
+  if (isLoading) {
+    return (
+       <div className="space-y-6">
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (!pool) {
+    return (
+      <Card className="flex h-full items-center justify-center">
+        <div className="text-center text-muted-foreground">
+          <Layers className="mx-auto h-12 w-12" />
+          <p className="mt-4 text-lg">Select a pool to view details</p>
+        </div>
+      </Card>
+    );
+  }
+
+  const allDisks = pool.vdevs.flatMap(vdev => vdev.disks);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-start">
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-3 text-2xl font-headline">
+                <Layers className="h-8 w-8 text-primary"/>
+                {pool.name}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                Overall status of the ZFS pool.
+              </CardDescription>
+            </div>
+            <Badge variant={statusVariantMap[pool.status]} className="text-base capitalize">
+                {pool.status === 'online' ? <ShieldCheck className="mr-2 h-4 w-4" /> : <AlertCircle className="mr-2 h-4 w-4" />}
+                {pool.status}
+            </Badge>
+          </div>
+        </CardHeader>
+        <Separator />
+        <CardContent className="pt-6">
+            <PoolTopology vdevs={pool.vdevs} />
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors}>
+            <Siren className="mr-2 h-4 w-4" />
+            {isAnalyzingErrors ? 'Analyzing Errors...' : 'Detect Error Anomaly'}
+          </Button>
+        </CardFooter>
+      </Card>
+
+      {isAnalyzingErrors && <Skeleton className="w-full h-32" />}
+      {errorAnalysis?.isAnomaly && (
+        <Card className="border-accent">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-accent">
+                    <AlertTriangle/>
+                    Error Anomaly Detected
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>{errorAnalysis.explanation}</p>
+            </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {allDisks.map((disk) => (
+          <DiskInfo key={disk.id} disk={disk} />
+        ))}
+      </div>
+
+      <LogViewer logs={pool.logs} isLoading={isLoading} />
+    </div>
+  );
+}
