@@ -65,7 +65,16 @@ export default function Home() {
 
     const diskTemperatures = allDisks
         .filter(d => d.temperature !== undefined)
-        .map(d => ({ name: d.name, temperature: d.temperature as number, fill: "hsl(var(--chart-1))" }));
+        .map(d => {
+            const temp = d.temperature as number;
+            let fill = "hsl(var(--chart-1))"; // Normal
+            if (temp >= 50 && temp < 60) {
+                fill = "hsl(var(--chart-4))"; // Warning
+            } else if (temp >= 60) {
+                fill = "hsl(var(--destructive))"; // Danger
+            }
+            return { name: d.name, temperature: temp, fill };
+        });
 
 
     return { 
@@ -226,7 +235,7 @@ export default function Home() {
             <CardContent>
                  <div className="h-[250px] w-full">
                     <ChartContainer config={chartConfig} className="h-full w-full">
-                        <BarChart layout="vertical" data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 20 }}>
+                        <BarChart layout="vertical" data={diskTemperatures} margin={{ top: 5, right: 20, bottom: 5, left: 50 }}>
                             <YAxis
                                 dataKey="name"
                                 type="category"
@@ -242,7 +251,11 @@ export default function Home() {
                                     indicator="dot"
                                 />} 
                             />
-                            <Bar dataKey="temperature" radius={4} />
+                            <Bar dataKey="temperature" radius={4}>
+                                {diskTemperatures.map((entry) => (
+                                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                ))}
+                            </Bar>
                         </BarChart>
                     </ChartContainer>
                 </div>
