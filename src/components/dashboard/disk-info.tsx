@@ -6,7 +6,7 @@ import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, AlertTriangle, Cpu, MemoryStick } from "lucide-react";
+import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database } from "lucide-react";
 import { StatusIcon } from "./status-icon";
 import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,15 @@ const DiskIcon = ({ name }: { name: string }) => {
   }
   return <HardDrive className="text-primary" />;
 };
+
+function formatBytes(bytes: number, decimals = 2) {
+    if (bytes === 0) return '0 GB';
+    const k = 1000;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['GB', 'TB', 'PB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 
 export function DiskInfo({ disk }: { disk: Disk }) {
@@ -72,6 +81,15 @@ export function DiskInfo({ disk }: { disk: Disk }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+         <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center gap-2 font-medium">
+                <Database className="h-4 w-4 text-muted-foreground" />
+                Size
+            </div>
+            <div className="font-bold text-foreground">
+                {disk.size ? formatBytes(disk.size) : "N/A"}
+            </div>
+        </div>
         <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="font-medium">Errors</div>
             <div className="flex gap-4 text-sm text-muted-foreground">

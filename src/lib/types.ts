@@ -10,6 +10,7 @@ export interface Disk {
     write: number;
     checksum: number;
   };
+  size?: number; // in GB
   smartData?: string;
   smartAnalysis?: string;
 }
