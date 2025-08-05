@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -5,7 +6,7 @@ import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { HardDrive, AlertTriangle, Cpu } from "lucide-react";
+import { HardDrive, AlertTriangle, Cpu, MemoryStick } from "lucide-react";
 import { StatusIcon } from "./status-icon";
 import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,14 @@ const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "
   offline: "secondary",
   unavailable: "secondary",
 };
+
+const DiskIcon = ({ name }: { name: string }) => {
+  if (name.toLowerCase().includes('nvme')) {
+    return <MemoryStick className="text-primary" />;
+  }
+  return <HardDrive className="text-primary" />;
+};
+
 
 export function DiskInfo({ disk }: { disk: Disk }) {
   const [analysis, setAnalysis] = useState(disk.smartAnalysis);
@@ -54,7 +63,7 @@ export function DiskInfo({ disk }: { disk: Disk }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <HardDrive className="text-primary" />
+          <DiskIcon name={disk.name} />
           <span>{disk.name}</span>
           <Badge variant={statusVariantMap[disk.status]} className="ml-auto capitalize">{disk.status}</Badge>
         </CardTitle>

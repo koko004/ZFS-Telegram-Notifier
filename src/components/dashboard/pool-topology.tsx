@@ -1,7 +1,8 @@
+
 "use client";
 
 import type { VDev } from "@/lib/types";
-import { HardDrive, Copy, Layers2, AlignHorizontalSpaceAround } from "lucide-react";
+import { HardDrive, Copy, Layers2, AlignHorizontalSpaceAround, MemoryStick } from "lucide-react";
 import { StatusIcon } from "./status-icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -12,6 +13,14 @@ const topologyIcons: { [key in VDev["type"]]: React.ReactNode } = {
   raidz2: <Layers2 className="h-5 w-5" />,
   raidz3: <Layers2 className="h-5 w-5" />,
 };
+
+const DiskIcon = ({ name }: { name: string }) => {
+  if (name.toLowerCase().includes('nvme')) {
+    return <MemoryStick className="h-5 w-5 text-muted-foreground" />;
+  }
+  return <HardDrive className="h-5 w-5 text-muted-foreground" />;
+};
+
 
 export function PoolTopology({ vdevs }: { vdevs: VDev[] }) {
   return (
@@ -30,7 +39,7 @@ export function PoolTopology({ vdevs }: { vdevs: VDev[] }) {
                         <Tooltip key={disk.id}>
                         <TooltipTrigger asChild>
                             <div className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-muted transition-colors cursor-pointer">
-                            <HardDrive className="h-5 w-5 text-muted-foreground" />
+                            <DiskIcon name={disk.name} />
                             <span className="text-sm font-medium">{disk.name}</span>
                             <StatusIcon status={disk.status} />
                             </div>
