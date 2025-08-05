@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Pool } from "@/lib/types";
+import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +21,22 @@ const statusVariantMap: { [key in Pool["status"]]: "default" | "destructive" | "
   faulted: "destructive",
 };
 
-export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading: boolean }) {
+export function PoolDetails({ poolId }: { poolId: string }) {
+  const [pool, setPool] = useState<Pool | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [errorAnalysis, setErrorAnalysis] = useState(pool?.errorAnalysis);
   const [isAnalyzingErrors, setIsAnalyzingErrors] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Simulate fetching a single pool's data
+    const foundPool = mockPools.find(p => p.id === poolId) || null;
+    setPool(foundPool);
+    if (foundPool) {
+      setErrorAnalysis(foundPool.errorAnalysis);
+    }
+    setIsLoading(false);
+  }, [poolId]);
 
   const handleAnalyzeErrors = async () => {
     if (!pool || !pool.logs || pool.logs.length === 0) {
@@ -58,7 +71,7 @@ export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading:
 
   if (isLoading) {
     return (
-       <div className="space-y-6">
+       <div className="space-y-6 p-4 md:p-6">
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-64 w-full" />
         <Skeleton className="h-64 w-full" />
@@ -68,10 +81,11 @@ export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading:
 
   if (!pool) {
     return (
-      <Card className="flex h-full items-center justify-center">
+      <Card className="flex h-full items-center justify-center m-4 md:m-6">
         <div className="text-center text-muted-foreground">
-          <Layers className="mx-auto h-12 w-12" />
-          <p className="mt-4 text-lg">Select a pool to view details</p>
+          <AlertCircle className="mx-auto h-12 w-12" />
+          <p className="mt-4 text-lg">Pool not found</p>
+          <p>The requested ZFS pool could not be found.</p>
         </div>
       </Card>
     );
@@ -80,7 +94,7 @@ export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading:
   const allDisks = pool.vdevs.flatMap(vdev => vdev.disks);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <Card>
         <CardHeader>
           <div className="flex items-start">
@@ -126,7 +140,7 @@ export function PoolDetails({ pool, isLoading }: { pool: Pool | null; isLoading:
         </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {allDisks.map((disk) => (
           <DiskInfo key={disk.id} disk={disk} />
         ))}

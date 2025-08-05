@@ -6,16 +6,19 @@ import { cn } from "@/lib/utils";
 import { Layers } from "lucide-react";
 import { StatusIcon } from "./status-icon";
 import { Skeleton } from "../ui/skeleton";
-import { AddPoolDialog } from "./add-pool-dialog";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
 
 interface PoolListProps {
   pools: Pool[];
-  selectedPool: Pool | null;
-  onSelectPool: (pool: Pool) => void;
   isLoading: boolean;
 }
 
-export function PoolList({ pools, selectedPool, onSelectPool, isLoading }: PoolListProps) {
+export function PoolList({ pools, isLoading }: PoolListProps) {
+  const params = useParams();
+  const selectedPoolId = params.id;
+
   if (isLoading) {
     return (
       <div className="space-y-2 p-2">
@@ -35,19 +38,18 @@ export function PoolList({ pools, selectedPool, onSelectPool, isLoading }: PoolL
             variant="ghost"
             className={cn(
               "w-full justify-start gap-3",
-              selectedPool?.id === pool.id && "bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground"
+              selectedPoolId === pool.id && "bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground"
             )}
-            onClick={() => onSelectPool(pool)}
+            asChild
           >
-            <StatusIcon status={pool.status} />
-            <Layers className="h-5 w-5" />
-            <span className="truncate">{pool.name}</span>
+            <Link href={`/pool/${pool.id}`}>
+              <StatusIcon status={pool.status} />
+              <Layers className="h-5 w-5" />
+              <span className="truncate">{pool.name}</span>
+            </Link>
           </Button>
         ))}
       </nav>
-      <div className="mt-4">
-        <AddPoolDialog />
-      </div>
     </div>
   );
 }
