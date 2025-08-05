@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { Pool } from "@/lib/types";
+import { useState, useEffect, createRef, RefObject } from "react";
+import type { Pool, Disk } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,12 @@ export function PoolDetails({ poolId }: { poolId: string }) {
   const [errorAnalysis, setErrorAnalysis] = useState(pool?.errorAnalysis);
   const [isAnalyzingErrors, setIsAnalyzingErrors] = useState(false);
   const { toast } = useToast();
+
+  const allDisks = pool?.vdevs.flatMap(vdev => vdev.disks) || [];
+  const diskRefs = allDisks.reduce((acc, disk) => {
+    acc[disk.id] = createRef<HTMLDivElement>();
+    return acc;
+  }, {} as Record<string, RefObject<HTMLDivElement>>);
 
   useEffect(() => {
     // Simulate fetching a single pool's data
@@ -68,7 +74,13 @@ export function PoolDetails({ poolId }: { poolId: string }) {
       setIsAnalyzingErrors(false);
     }
   };
-
+  
+  const scrollToDisk = (diskId: string) => {
+    diskRefs[diskId]?.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   if (isLoading) {
     return (
@@ -92,8 +104,6 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     );
   }
 
-  const allDisks = pool.vdevs.flatMap(vdev => vdev.disks);
-
   return (
     <div className="space-y-6 p-4 md:p-6">
       <Card>
@@ -116,7 +126,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
         </CardHeader>
         <Separator />
         <CardContent className="pt-6">
-            <PoolTopology vdevs={pool.vdevs} />
+            <PoolTopology vdevs={pool.vdevs} onDiskClick={scrollToDisk} />
         </CardContent>
         <CardFooter>
           <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors}>
@@ -143,7 +153,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {allDisks.map((disk) => (
-          <DiskInfo key={disk.id} disk={disk} />
+          <DiskInfo key={disk.id} disk={disk} ref={diskRefs[disk.id]} />
         ))}
       </div>
 

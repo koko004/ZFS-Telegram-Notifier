@@ -21,8 +21,12 @@ const DiskIcon = ({ name }: { name: string }) => {
   return <HardDrive className="h-5 w-5 text-muted-foreground" />;
 };
 
+interface PoolTopologyProps {
+    vdevs: VDev[];
+    onDiskClick: (diskId: string) => void;
+}
 
-export function PoolTopology({ vdevs }: { vdevs: VDev[] }) {
+export function PoolTopology({ vdevs, onDiskClick }: PoolTopologyProps) {
   return (
     <div className="space-y-4">
         <h3 className="text-lg font-semibold font-headline">Pool Topology</h3>
@@ -38,11 +42,14 @@ export function PoolTopology({ vdevs }: { vdevs: VDev[] }) {
                     {vdev.disks.map((disk) => (
                         <Tooltip key={disk.id}>
                         <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-muted transition-colors cursor-pointer">
-                            <DiskIcon name={disk.name} />
-                            <span className="text-sm font-medium">{disk.name}</span>
-                            <StatusIcon status={disk.status} />
-                            </div>
+                            <button
+                                onClick={() => onDiskClick(disk.id)}
+                                className="flex items-center gap-2 p-2 rounded-md border bg-card hover:bg-muted transition-colors cursor-pointer"
+                            >
+                                <DiskIcon name={disk.name} />
+                                <span className="text-sm font-medium">{disk.name}</span>
+                                <StatusIcon status={disk.status} />
+                            </button>
                         </TooltipTrigger>
                         <TooltipContent>
                             <p className="capitalize">Status: {disk.status}</p>

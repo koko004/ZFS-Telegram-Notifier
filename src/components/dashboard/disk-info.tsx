@@ -1,13 +1,12 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HardDrive, AlertTriangle, Cpu, MemoryStick, Database } from "lucide-react";
-import { StatusIcon } from "./status-icon";
 import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
@@ -37,7 +36,7 @@ function formatBytes(bytes: number, decimals = 2) {
 }
 
 
-export function DiskInfo({ disk }: { disk: Disk }) {
+export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, ref) => {
   const [analysis, setAnalysis] = useState(disk.smartAnalysis);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
@@ -69,7 +68,7 @@ export function DiskInfo({ disk }: { disk: Disk }) {
   };
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <DiskIcon name={disk.name} />
@@ -122,4 +121,6 @@ export function DiskInfo({ disk }: { disk: Disk }) {
       </CardFooter>
     </Card>
   );
-}
+});
+
+DiskInfo.displayName = "DiskInfo";
