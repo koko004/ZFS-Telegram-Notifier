@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { KeyRound, Server } from "lucide-react";
 
 export default function SettingsPage() {
   return (
@@ -19,36 +18,6 @@ export default function SettingsPage() {
             Manage your application settings and notification preferences.
           </p>
         </div>
-
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Server className="h-5 w-5" />
-                    Remote Server
-                </CardTitle>
-                <CardDescription>
-                    Configure the connection to the remote server you want to monitor.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="server-address">Server Address</Label>
-                    <Input id="server-address" placeholder="user@192.168.1.100" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="server-user">Username</Label>
-                    <Input id="server-user" placeholder="root" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="server-password">Password / Key Passphrase</Label>
-                    <Input id="server-password" type="password" />
-                </div>
-                 <div className="flex items-center space-x-2">
-                    <Button>Save Configuration</Button>
-                    <Button variant="secondary">Test Connection</Button>
-                </div>
-            </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
