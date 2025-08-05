@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -5,7 +6,7 @@ import type { Pool } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Server, AlertTriangle, Send } from "lucide-react";
+import { HardDrive, Server, AlertTriangle, Send, MemoryStick } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
@@ -21,9 +22,9 @@ export default function Home() {
     setIsLoading(false);
   }, []);
 
-  const { totalDisks, failedDisks, totalAllocated, totalSize } = useMemo(() => {
+  const { totalDisks, failedDisks, totalAllocated, totalSize, diskTypes } = useMemo(() => {
     if (isLoading || pools.length === 0) {
-      return { totalDisks: 0, failedDisks: 0, totalAllocated: 0, totalSize: 0 };
+      return { totalDisks: 0, failedDisks: 0, totalAllocated: 0, totalSize: 0, diskTypes: { nvme: 0, hdd: 0 } };
     }
 
     const allDisks = pools.flatMap(p => p.vdevs.flatMap(v => v.disks));
@@ -31,8 +32,17 @@ export default function Home() {
     
     const totalAllocated = pools.reduce((acc, pool) => acc + pool.allocated, 0);
     const totalSize = pools.reduce((acc, pool) => acc + pool.size, 0);
+    
+    const diskTypes = allDisks.reduce((acc, disk) => {
+        if (disk.name.toLowerCase().includes('nvme')) {
+            acc.nvme++;
+        } else {
+            acc.hdd++;
+        }
+        return acc;
+    }, { nvme: 0, hdd: 0});
 
-    return { totalDisks: allDisks.length, failedDisks: failedDisksCount, totalAllocated, totalSize };
+    return { totalDisks: allDisks.length, failedDisks: failedDisksCount, totalAllocated, totalSize, diskTypes };
   }, [pools, isLoading]);
 
   const storageData = useMemo(() => {
@@ -54,7 +64,7 @@ export default function Home() {
     },
   };
 
-  const StatCard = ({ title, value, icon: Icon, color, borderColor }: { title: string, value: string | number, icon: React.ElementType, color?: string, borderColor?: string }) => (
+  const StatCard = ({ title, value, icon: Icon, color, borderColor, children }: { title: string, value: string | number, icon: React.ElementType, color?: string, borderColor?: string, children?: React.ReactNode }) => (
     <Card className={cn("border-l-4", borderColor)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -62,6 +72,7 @@ export default function Home() {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
+        {children}
       </CardContent>
     </Card>
   );
@@ -84,7 +95,20 @@ export default function Home() {
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total Pools" value={pools.length} icon={Server} color="text-primary" borderColor="border-primary"/>
-        <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} color="text-accent" borderColor="border-accent"/>
+        
+        <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} color="text-accent" borderColor="border-accent">
+            <div className="text-xs text-muted-foreground flex items-center justify-between mt-1 pt-1 border-t">
+               <div className="flex items-center gap-1">
+                   <MemoryStick className="h-3 w-3" />
+                   <span>NVMe: {diskTypes.nvme}</span>
+               </div>
+               <div className="flex items-center gap-1">
+                   <HardDrive className="h-3 w-3" />
+                   <span>HDD: {diskTypes.hdd}</span>
+               </div>
+            </div>
+        </StatCard>
+        
         <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} color={failedDisks > 0 ? "text-destructive" : "text-muted-foreground"} borderColor={failedDisks > 0 ? "border-destructive" : "border-border"}/>
         <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color="text-blue-500" borderColor="border-blue-500" />
       </div>
