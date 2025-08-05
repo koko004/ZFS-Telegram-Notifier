@@ -39,6 +39,21 @@ export interface Pool {
     isAnomaly: boolean;
     explanation: string;
   };
+  remoteAddress: string;
 }
 
-    
+export type PoolInput = Omit<Pool, 'id'>;
+
+
+export interface Settings {
+    telegram: {
+        botToken: string;
+        chatId: string;
+    };
+    notifications: {
+        poolDegraded: boolean;
+        poolFaulted: boolean;
+        diskErrors: boolean;
+        smartFailures: boolean;
+    };
+}

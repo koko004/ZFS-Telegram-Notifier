@@ -9,18 +9,35 @@ import { Separator } from "@/components/ui/separator";
 import { PoolList } from "@/components/dashboard/pool-list";
 import { AddPoolDialog } from "@/components/dashboard/add-pool-dialog";
 import type { Pool } from "@/lib/types";
-import { mockPools } from "@/lib/mock-data";
+import { getPools } from "@/services/pool-service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 
 export function Sidebar() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchPools = async () => {
+    setIsLoading(true);
+    try {
+        const fetchedPools = await getPools();
+        setPools(fetchedPools);
+    } catch (error) {
+        toast({
+            title: "Error fetching pools",
+            description: "Could not fetch ZFS pools from the server.",
+            variant: "destructive"
+        })
+        console.error("Failed to fetch pools", error);
+    } finally {
+        setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    // Simulate fetching data
-    setPools(mockPools);
-    setIsLoading(false);
+    fetchPools();
   }, []);
 
   return (
@@ -53,7 +70,7 @@ export function Sidebar() {
             <CardHeader className="px-4 pt-0">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-xl">ZFS Pools</CardTitle>
-                    <AddPoolDialog />
+                    <AddPoolDialog onPoolAdded={fetchPools}/>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
