@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import type { Pool } from "@/lib/types";
+import type { Pool, PoolStatus, DiskStatus } from "@/lib/types";
 import { mockPools } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HardDrive, Server, AlertTriangle, Send, MemoryStick } from "lucide-react";
+import { HardDrive, Server, AlertTriangle, Send, MemoryStick, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { cn } from "@/lib/utils";
@@ -22,13 +22,29 @@ export default function Home() {
     setIsLoading(false);
   }, []);
 
-  const { totalDisks, failedDisks, totalAllocated, totalSize, diskTypes } = useMemo(() => {
+  const { 
+    totalDisks, 
+    failedDisks, 
+    totalAllocated, 
+    totalSize, 
+    diskTypes,
+    poolStatusCounts,
+    failedDiskStatus
+  } = useMemo(() => {
     if (isLoading || pools.length === 0) {
-      return { totalDisks: 0, failedDisks: 0, totalAllocated: 0, totalSize: 0, diskTypes: { nvme: 0, hdd: 0 } };
+      return { 
+        totalDisks: 0, 
+        failedDisks: 0, 
+        totalAllocated: 0, 
+        totalSize: 0, 
+        diskTypes: { nvme: 0, hdd: 0 },
+        poolStatusCounts: { online: 0, degraded: 0, faulted: 0 },
+        failedDiskStatus: { degraded: 0, faulted: 0, offline: 0, unavailable: 0 }
+      };
     }
 
     const allDisks = pools.flatMap(p => p.vdevs.flatMap(v => v.disks));
-    const failedDisksCount = allDisks.filter(d => d.status === 'faulted' || d.status === 'degraded' || d.status === 'offline' || d.status === 'unavailable').length;
+    const failedDisksList = allDisks.filter(d => d.status !== 'online');
     
     const totalAllocated = pools.reduce((acc, pool) => acc + pool.allocated, 0);
     const totalSize = pools.reduce((acc, pool) => acc + pool.size, 0);
@@ -42,7 +58,26 @@ export default function Home() {
         return acc;
     }, { nvme: 0, hdd: 0});
 
-    return { totalDisks: allDisks.length, failedDisks: failedDisksCount, totalAllocated, totalSize, diskTypes };
+    const poolStatusCounts = pools.reduce((acc, pool) => {
+        acc[pool.status] = (acc[pool.status] || 0) + 1;
+        return acc;
+    }, {} as Record<PoolStatus, number>);
+
+    const failedDiskStatus = failedDisksList.reduce((acc, disk) => {
+        acc[disk.status] = (acc[disk.status] || 0) + 1;
+        return acc;
+    }, {} as Record<Exclude<DiskStatus, 'online'>, number>);
+
+
+    return { 
+        totalDisks: allDisks.length, 
+        failedDisks: failedDisksList.length, 
+        totalAllocated, 
+        totalSize, 
+        diskTypes,
+        poolStatusCounts,
+        failedDiskStatus
+    };
   }, [pools, isLoading]);
 
   const storageData = useMemo(() => {
@@ -76,6 +111,17 @@ export default function Home() {
       </CardContent>
     </Card>
   );
+  
+  const DetailRow = ({ icon: Icon, label, value, colorClass }: { icon: React.ElementType, label: string, value: number, colorClass?: string }) => {
+    if (value === 0 || value === undefined) return null;
+    return (
+        <div className="flex items-center gap-1">
+            <Icon className={cn("h-3 w-3", colorClass)} />
+            <span className="capitalize">{label}: {value}</span>
+        </div>
+    );
+  };
+
 
   if (isLoading) {
     return (
@@ -94,7 +140,13 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Pools" value={pools.length} icon={Server} color="text-primary" borderColor="border-primary"/>
+        <StatCard title="Total Pools" value={pools.length} icon={Server} color="text-primary" borderColor="border-primary">
+            <div className="text-xs text-muted-foreground flex items-center justify-between mt-1 pt-1 border-t">
+                <DetailRow icon={ShieldCheck} label="Online" value={poolStatusCounts.online} colorClass="text-primary"/>
+                <DetailRow icon={ShieldAlert} label="Degraded" value={poolStatusCounts.degraded} colorClass="text-yellow-500"/>
+                <DetailRow icon={ShieldX} label="Faulted" value={poolStatusCounts.faulted} colorClass="text-destructive"/>
+            </div>
+        </StatCard>
         
         <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} color="text-accent" borderColor="border-accent">
             <div className="text-xs text-muted-foreground flex items-center justify-between mt-1 pt-1 border-t">
@@ -109,7 +161,13 @@ export default function Home() {
             </div>
         </StatCard>
         
-        <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} color={failedDisks > 0 ? "text-destructive" : "text-muted-foreground"} borderColor={failedDisks > 0 ? "border-destructive" : "border-border"}/>
+        <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} color={failedDisks > 0 ? "text-destructive" : "text-muted-foreground"} borderColor={failedDisks > 0 ? "border-destructive" : "border-border"}>
+             <div className="text-xs text-muted-foreground flex flex-wrap items-center justify-between mt-1 pt-1 border-t">
+                <DetailRow icon={ShieldAlert} label="Degraded" value={failedDiskStatus.degraded} colorClass="text-yellow-500"/>
+                <DetailRow icon={ShieldX} label="Faulted" value={failedDiskStatus.faulted} colorClass="text-destructive"/>
+                 <DetailRow icon={ShieldX} label="Offline" value={failedDiskStatus.offline} />
+             </div>
+        </StatCard>
         <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color="text-blue-500" borderColor="border-blue-500" />
       </div>
 
@@ -154,3 +212,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 export type DiskStatus = 'online' | 'degraded' | 'faulted' | 'offline' | 'unavailable';
 
 export interface Disk {
@@ -38,3 +39,5 @@ export interface Pool {
     explanation: string;
   };
 }
+
+    
