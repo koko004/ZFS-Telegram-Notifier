@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, createRef, RefObject } from "react";
+import { useState, useEffect, createRef, RefObject, useCallback } from "react";
 import type { Pool, Disk, PoolStatus } from "@/lib/types";
-import { mockPools } from "@/lib/mock-data";
+import { getPool } from "@/services/pool-service";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ import { LogViewer } from "./log-viewer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectErrorAnomaly } from "@/ai/flows/error-anomaly-detection";
 import { useToast } from "@/hooks/use-toast";
-import { useParams } from "next/navigation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 
@@ -54,15 +53,28 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     return acc;
   }, {} as Record<string, RefObject<HTMLDivElement>>);
 
-  useEffect(() => {
-    // Simulate fetching a single pool's data
-    const foundPool = mockPools.find(p => p.id === poolId) || null;
-    setPool(foundPool);
-    if (foundPool) {
-      setErrorAnalysis(foundPool.errorAnalysis);
+  const fetchPool = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        const foundPool = await getPool(poolId);
+        setPool(foundPool);
+        if (foundPool) {
+          setErrorAnalysis(foundPool.errorAnalysis);
+        }
+    } catch(error) {
+        toast({
+            title: "Error",
+            description: "Failed to fetch pool details.",
+            variant: "destructive"
+        })
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [poolId]);
+  }, [poolId, toast]);
+
+  useEffect(() => {
+    fetchPool();
+  }, [fetchPool]);
 
   const handleAnalyzeErrors = async () => {
     if (!pool || !pool.logs || pool.logs.length === 0) {
@@ -82,6 +94,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
         baseline: 'No errors reported in the last 24 hours.',
       });
       setErrorAnalysis(result);
+      // Here you would also save the analysis to Firestore
     } catch (error) {
       console.error("Error analysis failed:", error);
       toast({

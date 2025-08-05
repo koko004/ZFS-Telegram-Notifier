@@ -3,24 +3,47 @@
 
 import { useState, useEffect, useMemo } from "react";
 import type { Pool, PoolStatus, DiskStatus } from "@/lib/types";
-import { mockPools } from "@/lib/mock-data";
+import { getPools } from "@/services/pool-service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HardDrive, Server, AlertTriangle, Send, MemoryStick, ShieldCheck, ShieldAlert, ShieldX, Thermometer } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { getSettings } from "@/services/settings-service";
 
 export default function Home() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [telegramStatus, setTelegramStatus] = useState("Connected");
+  const [telegramStatus, setTelegramStatus] = useState("Not Configured");
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching data
-    setPools(mockPools);
-    setIsLoading(false);
-  }, []);
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const [fetchedPools, settings] = await Promise.all([
+                getPools(),
+                getSettings()
+            ]);
+            setPools(fetchedPools);
+            if (settings.telegram.botToken && settings.telegram.chatId) {
+                setTelegramStatus("Connected");
+            }
+        } catch (error) {
+            toast({
+                title: "Error fetching data",
+                description: "Could not fetch data from the server.",
+                variant: "destructive"
+            });
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
 
   const { 
     totalDisks, 
@@ -138,10 +161,10 @@ export default function Home() {
     return (
       <div className="p-4 md:p-6 space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
             <Skeleton className="h-96" />
@@ -182,7 +205,7 @@ export default function Home() {
                  <DetailRow icon={ShieldX} label="Offline" value={failedDiskStatus.offline} />
              </div>
         </StatCard>
-        <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color="text-blue-500" borderColor="border-blue-500" />
+        <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color={telegramStatus === 'Connected' ? "text-blue-500" : "text-muted-foreground"} borderColor={telegramStatus === 'Connected' ? "border-blue-500" : "border-border"} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
