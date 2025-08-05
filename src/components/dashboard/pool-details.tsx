@@ -14,10 +14,11 @@ import { LogViewer } from "./log-viewer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectErrorAnomaly } from "@/ai/flows/error-anomaly-detection";
 import { useToast } from "@/hooks/use-toast";
+import { useParams } from "next/navigation";
 
-const statusVariantMap: { [key in Pool["status"]]: "default" | "destructive" | "outline" } = {
+const statusVariantMap: { [key in Pool["status"]]: "default" | "destructive" | "warning" } = {
   online: "default",
-  degraded: "outline",
+  degraded: "warning",
   faulted: "destructive",
 };
 

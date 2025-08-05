@@ -5,7 +5,7 @@ type Status = Pool['status'] | Disk['status'];
 
 const statusClasses: Record<Status, string> = {
   online: "bg-primary",
-  degraded: "bg-accent",
+  degraded: "bg-yellow-500",
   faulted: "bg-destructive",
   offline: "bg-muted-foreground",
   unavailable: "bg-muted-foreground",

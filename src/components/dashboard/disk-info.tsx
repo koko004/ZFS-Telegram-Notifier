@@ -11,9 +11,9 @@ import { analyzeSmartData } from "@/ai/flows/smart-data-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 
-const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "secondary" | "outline" } = {
+const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "secondary" | "warning" } = {
   online: "default",
-  degraded: "outline",
+  degraded: "warning",
   faulted: "destructive",
   offline: "secondary",
   unavailable: "secondary",
