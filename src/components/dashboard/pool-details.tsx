@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, AlertTriangle, Layers, ShieldCheck, Siren, Database } from "lucide-react";
+import { AlertCircle, AlertTriangle, Layers, ShieldCheck, Siren, Database, Trash2 } from "lucide-react";
 import { PoolTopology } from "./pool-topology";
 import { DiskInfo } from "./disk-info";
 import { LogViewer } from "./log-viewer";
@@ -126,7 +126,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-4 md:p-6 relative">
       <Card>
         <CardHeader>
           <div className="flex items-start">
@@ -198,7 +198,13 @@ export function PoolDetails({ poolId }: { poolId: string }) {
       </div>
 
       <LogViewer logs={pool.logs} isLoading={isLoading} />
+
+      <div className="fixed bottom-6 right-6">
+        <Button variant="destructive" size="icon">
+          <Trash2 className="h-5 w-5" />
+          <span className="sr-only">Delete Pool</span>
+        </Button>
+      </div>
     </div>
   );
-
-    
+}
