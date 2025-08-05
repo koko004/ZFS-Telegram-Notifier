@@ -25,8 +25,6 @@ export default function Home() {
   const { 
     totalDisks, 
     failedDisks, 
-    totalAllocated, 
-    totalSize, 
     diskTypes,
     poolStatusCounts,
     failedDiskStatus
@@ -35,8 +33,6 @@ export default function Home() {
       return { 
         totalDisks: 0, 
         failedDisks: 0, 
-        totalAllocated: 0, 
-        totalSize: 0, 
         diskTypes: { nvme: 0, hdd: 0 },
         poolStatusCounts: { online: 0, degraded: 0, faulted: 0 },
         failedDiskStatus: { degraded: 0, faulted: 0, offline: 0, unavailable: 0 }
@@ -45,9 +41,6 @@ export default function Home() {
 
     const allDisks = pools.flatMap(p => p.vdevs.flatMap(v => v.disks));
     const failedDisksList = allDisks.filter(d => d.status !== 'online');
-    
-    const totalAllocated = pools.reduce((acc, pool) => acc + pool.allocated, 0);
-    const totalSize = pools.reduce((acc, pool) => acc + pool.size, 0);
     
     const diskTypes = allDisks.reduce((acc, disk) => {
         if (disk.name.toLowerCase().includes('nvme')) {
@@ -72,30 +65,28 @@ export default function Home() {
     return { 
         totalDisks: allDisks.length, 
         failedDisks: failedDisksList.length, 
-        totalAllocated, 
-        totalSize, 
         diskTypes,
         poolStatusCounts,
         failedDiskStatus
     };
   }, [pools, isLoading]);
 
-  const storageData = useMemo(() => {
-    if (totalSize === 0) return [];
+  const diskTypeData = useMemo(() => {
+    if (!diskTypes) return [];
     return [
-      { name: 'Used', value: totalAllocated, fill: 'var(--color-used)' },
-      { name: 'Free', value: totalSize - totalAllocated, fill: 'var(--color-free)' },
+      { name: 'NVMe', value: diskTypes.nvme, fill: 'var(--color-nvme)' },
+      { name: 'HDD', value: diskTypes.hdd, fill: 'var(--color-hdd)' },
     ];
-  }, [totalAllocated, totalSize]);
+  }, [diskTypes]);
 
   const chartConfig = {
-    used: {
-      label: 'Used',
-      color: 'hsl(var(--primary))',
+    nvme: {
+      label: 'NVMe',
+      color: 'hsl(var(--chart-1))',
     },
-    free: {
-      label: 'Free',
-      color: 'hsl(var(--secondary))',
+    hdd: {
+      label: 'HDD',
+      color: 'hsl(var(--chart-2))',
     },
   };
 
@@ -173,8 +164,8 @@ export default function Home() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Storage Overview</CardTitle>
-          <CardDescription>Total used storage across all pools.</CardDescription>
+          <CardTitle>Disk Types</CardTitle>
+          <CardDescription>Distribution of disk types across all pools.</CardDescription>
         </CardHeader>
         <CardContent className="pb-8">
             <div className="h-[250px] w-full">
@@ -185,14 +176,14 @@ export default function Home() {
                       content={<ChartTooltipContent hideLabel />}
                     />
                     <Pie
-                      data={storageData}
+                      data={diskTypeData}
                       dataKey="value"
                       nameKey="name"
                       innerRadius={60}
                       strokeWidth={5}
                     >
-                       <Cell key="used" fill="hsl(var(--chart-1))" />
-                       <Cell key="free" fill="hsl(var(--chart-2))" />
+                       <Cell key="nvme" fill="hsl(var(--chart-1))" />
+                       <Cell key="hdd" fill="hsl(var(--chart-2))" />
                     </Pie>
                   </PieChart>
                 </ChartContainer>
@@ -200,11 +191,11 @@ export default function Home() {
              <div className="flex items-center justify-center space-x-4 text-sm text-muted-foreground mt-4">
                 <div className="flex items-center">
                     <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-1))] mr-2" />
-                    Used: {(totalAllocated / 1000).toFixed(2)} TB
+                    NVMe: {diskTypes.nvme}
                 </div>
                 <div className="flex items-center">
                     <span className="h-2.5 w-2.5 rounded-full bg-[hsl(var(--chart-2))] mr-2" />
-                    Free: {((totalSize - totalAllocated) / 1000).toFixed(2)} TB
+                    HDD: {diskTypes.hdd}
                 </div>
             </div>
         </CardContent>
@@ -212,5 +203,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
