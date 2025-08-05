@@ -18,9 +18,9 @@ export function AddPoolDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add New Pool
+        <Button variant="ghost" size="icon">
+          <PlusCircle className="h-5 w-5" />
+          <span className="sr-only">Add New Pool</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

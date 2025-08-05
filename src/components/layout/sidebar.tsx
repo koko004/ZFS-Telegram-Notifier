@@ -50,13 +50,13 @@ export function Sidebar() {
         <Separator className="my-4" />
         <Card className="mx-4 shadow-none border-0 bg-transparent">
             <CardHeader className="px-4 pt-0">
-                <CardTitle className="text-xl">ZFS Pools</CardTitle>
+                <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">ZFS Pools</CardTitle>
+                    <AddPoolDialog />
+                </div>
             </CardHeader>
             <CardContent className="p-0">
                 <PoolList pools={pools} isLoading={isLoading} />
-                 <div className="mt-4 px-4">
-                    <AddPoolDialog />
-                </div>
             </CardContent>
         </Card>
       </div>
