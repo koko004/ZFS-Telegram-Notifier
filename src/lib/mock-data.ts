@@ -5,6 +5,9 @@ export const mockPools: Pool[] = [
     id: 'pool-1',
     name: 'rpool-main-server',
     status: 'online',
+    size: 960,
+    allocated: 450,
+    free: 510,
     vdevs: [
       {
         type: 'mirror',
@@ -36,6 +39,9 @@ export const mockPools: Pool[] = [
     id: 'pool-2',
     name: 'tank-media-archive',
     status: 'degraded',
+    size: 12000,
+    allocated: 8500,
+    free: 3500,
     vdevs: [
       {
         type: 'raidz1',
@@ -78,6 +84,9 @@ export const mockPools: Pool[] = [
     id: 'pool-3',
     name: 'backup-storage',
     status: 'faulted',
+    size: 2000,
+    allocated: 1800,
+    free: 200,
     vdevs: [
         {
             type: 'stripe',

@@ -28,6 +28,9 @@ export interface Pool {
   status: PoolStatus;
   vdevs: VDev[];
   logs: string[];
+  size: number; // in GB
+  allocated: number; // in GB
+  free: number; // in GB
   errorAnalysis?: {
     isAnomaly: boolean;
     explanation: string;
