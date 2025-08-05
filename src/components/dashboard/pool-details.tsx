@@ -126,7 +126,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 relative">
+    <div className="space-y-6 p-4 md:p-6">
       <Card>
         <CardHeader>
           <div className="flex items-start">
@@ -199,10 +199,10 @@ export function PoolDetails({ poolId }: { poolId: string }) {
 
       <LogViewer logs={pool.logs} isLoading={isLoading} />
 
-      <div className="fixed bottom-6 right-6">
-        <Button variant="destructive" size="icon">
+      <div className="flex justify-end mt-4">
+        <Button variant="destructive">
           <Trash2 className="h-5 w-5" />
-          <span className="sr-only">Delete Pool</span>
+          Delete Pool
         </Button>
       </div>
     </div>
