@@ -226,13 +226,19 @@ export default function Home() {
             <CardContent>
                  <div className="h-[250px] w-full">
                     <ChartContainer config={chartConfig} className="h-full w-full">
-                        <BarChart data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 20 }}>
-                            <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-                             <YAxis dataKey="temperature" unit="°C" />
+                        <BarChart layout="vertical" data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 20 }}>
+                            <YAxis
+                                dataKey="name"
+                                type="category"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={10}
+                                width={80}
+                            />
+                            <XAxis dataKey="temperature" type="number" unit="°C" />
                             <ChartTooltip 
+                                cursor={false}
                                 content={<ChartTooltipContent 
-                                    labelKey="temperature" 
-                                    nameKey="name"
                                     indicator="dot"
                                 />} 
                             />
@@ -246,5 +252,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
