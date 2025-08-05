@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "../ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "secondary" | "warning" } = {
   online: "default",
@@ -68,6 +69,14 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
       setIsAnalyzing(false);
     }
   };
+  
+  const tempColorClass = disk.temperature !== undefined
+    ? disk.temperature >= 60
+      ? "text-destructive"
+      : disk.temperature >= 50
+      ? "text-yellow-500"
+      : "text-muted-foreground"
+    : "text-muted-foreground";
 
   return (
     <Card ref={ref}>
@@ -93,10 +102,10 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
         </div>
         <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-2 font-medium">
-                <Thermometer className="h-4 w-4 text-muted-foreground" />
+                <Thermometer className={cn("h-4 w-4", tempColorClass)} />
                 Temperature
             </div>
-            <div className="font-bold text-foreground">
+            <div className={cn("font-bold", tempColorClass)}>
                 {disk.temperature ? `${disk.temperature}°C` : "N/A"}
             </div>
         </div>
