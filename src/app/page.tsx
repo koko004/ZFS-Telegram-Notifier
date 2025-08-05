@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HardDrive, Server, AlertTriangle, Send } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [pools, setPools] = useState<Pool[]>([]);
@@ -26,12 +27,12 @@ export default function Home() {
     }
 
     const allDisks = pools.flatMap(p => p.vdevs.flatMap(v => v.disks));
-    const failedDisks = allDisks.filter(d => d.status === 'faulted' || d.status === 'degraded' || d.status === 'offline' || d.status === 'unavailable').length;
+    const failedDisksCount = allDisks.filter(d => d.status === 'faulted' || d.status === 'degraded' || d.status === 'offline' || d.status === 'unavailable').length;
     
     const totalAllocated = pools.reduce((acc, pool) => acc + pool.allocated, 0);
     const totalSize = pools.reduce((acc, pool) => acc + pool.size, 0);
 
-    return { totalDisks: allDisks.length, failedDisks, totalAllocated, totalSize };
+    return { totalDisks: allDisks.length, failedDisks: failedDisksCount, totalAllocated, totalSize };
   }, [pools, isLoading]);
 
   const storageData = useMemo(() => {
@@ -53,11 +54,11 @@ export default function Home() {
     },
   };
 
-  const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
-    <Card>
+  const StatCard = ({ title, value, icon: Icon, color, borderColor }: { title: string, value: string | number, icon: React.ElementType, color?: string, borderColor?: string }) => (
+    <Card className={cn("border-l-4", borderColor)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className={cn("h-5 w-5", color || "text-muted-foreground")} />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
@@ -82,10 +83,10 @@ export default function Home() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Pools" value={pools.length} icon={Server} />
-        <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} />
-        <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} />
-        <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} />
+        <StatCard title="Total Pools" value={pools.length} icon={Server} color="text-primary" borderColor="border-primary"/>
+        <StatCard title="Total Disks" value={totalDisks} icon={HardDrive} color="text-accent" borderColor="border-accent"/>
+        <StatCard title="Failed Disks" value={failedDisks} icon={AlertTriangle} color={failedDisks > 0 ? "text-destructive" : "text-muted-foreground"} borderColor={failedDisks > 0 ? "border-destructive" : "border-border"}/>
+        <StatCard title="Telegram Bot" value={telegramStatus} icon={Send} color="text-blue-500" borderColor="border-blue-500" />
       </div>
 
       <Card>
