@@ -226,7 +226,7 @@ export default function Home() {
             <CardContent>
                  <div className="h-[250px] w-full">
                     <ChartContainer config={chartConfig} className="h-full w-full">
-                        <BarChart data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
+                        <BarChart data={diskTemperatures} margin={{ top: 20, right: 20, bottom: 5, left: 20 }}>
                             <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
                              <YAxis dataKey="temperature" unit="°C" />
                             <ChartTooltip 
