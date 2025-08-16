@@ -2,8 +2,10 @@
 export type DiskStatus = 'online' | 'degraded' | 'faulted' | 'offline' | 'unavailable';
 
 export interface Disk {
-  id: string;
+  id: number;
+  zfsId: string;
   name: string;
+  path: string;
   model: string;
   status: DiskStatus;
   errors: {
@@ -22,6 +24,8 @@ export type PoolTopologyType = 'stripe' | 'mirror' | 'raidz1' | 'raidz2' | 'raid
 export interface VDev {
   type: PoolTopologyType;
   disks: Disk[];
+  allocated?: number; // in GB
+  free?: number; // in GB
 }
 
 export type PoolStatus = 'online' | 'degraded' | 'faulted';
@@ -50,6 +54,7 @@ export interface Settings {
         botToken: string;
         chatId: string;
     };
+    googleAiApiKey?: string;
     notifications: {
         poolDegraded: boolean;
         poolFaulted: boolean;

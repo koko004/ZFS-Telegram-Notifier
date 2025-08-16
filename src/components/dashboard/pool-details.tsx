@@ -3,7 +3,8 @@
 
 import { useState, useEffect, createRef, RefObject, useCallback } from "react";
 import type { Pool, Disk, PoolStatus } from "@/lib/types";
-import { getPool } from "@/services/pool-service";
+import { getPool, deletePool } from "@/services/pool-service";
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,21 +32,48 @@ const statusDescriptions: { [key in PoolStatus]: string } = {
 };
 
 function formatBytes(bytes: number, decimals = 2) {
-    if (bytes === 0) return '0 GB';
-    const k = 1000;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['GB', 'TB', 'PB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    if (!+bytes) return '0 Bytes'
+
+    const k = 1024
+    const dm = decimals < 0 ? 0 : decimals
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
 
 
 export function PoolDetails({ poolId }: { poolId: string }) {
+  console.log("PoolDetails component rendered.");
   const [pool, setPool] = useState<Pool | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorAnalysis, setErrorAnalysis] = useState(pool?.errorAnalysis);
   const [isAnalyzingErrors, setIsAnalyzingErrors] = useState(false);
+  
   const { toast } = useToast();
+  const router = useRouter();
+
+  const handleDeletePool = async () => {
+    if (!pool) return;
+
+    if (confirm('Are you sure you want to delete this pool? This action cannot be undone.')) {
+      try {
+        await deletePool(pool.id.toString());
+        toast({
+          title: "Pool Deleted",
+          description: `Successfully deleted the ${pool.name} pool`,
+        });
+        router.push('/'); // Redirect to the main page after deletion
+      } catch (error) {
+        toast({
+          title: "Error Deleting Pool",
+          description: "An unexpected error occurred while deleting the pool.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const allDisks = pool?.vdevs.flatMap(vdev => vdev.disks) || [];
   const diskRefs = allDisks.reduce((acc, disk) => {
@@ -53,15 +81,18 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     return acc;
   }, {} as Record<string, RefObject<HTMLDivElement>>);
 
-  const fetchPool = useCallback(async () => {
+  const fetchPoolAndSettings = useCallback(async () => {
     setIsLoading(true);
+    console.log("fetchPoolAndSettings: Starting fetch.");
     try {
         const foundPool = await getPool(poolId);
         setPool(foundPool);
         if (foundPool) {
           setErrorAnalysis(foundPool.errorAnalysis);
         }
+        console.log("fetchPoolAndSettings: Data fetched successfully.", foundPool);
     } catch(error) {
+        console.error("fetchPoolAndSettings: Error during fetch.", error);
         toast({
             title: "Error",
             description: "Failed to fetch pool details.",
@@ -69,12 +100,15 @@ export function PoolDetails({ poolId }: { poolId: string }) {
         })
     } finally {
         setIsLoading(false);
+        console.log("fetchPoolAndSettings: Finished loading.");
     }
   }, [poolId, toast]);
 
   useEffect(() => {
-    fetchPool();
-  }, [fetchPool]);
+    console.log("PoolDetails useEffect: Calling fetchPoolAndSettings.");
+    console.log("Inside useEffect. Current poolId:", poolId);
+    fetchPoolAndSettings();
+  }, [fetchPoolAndSettings]);
 
   const handleAnalyzeErrors = async () => {
     if (!pool || !pool.logs || pool.logs.length === 0) {
@@ -86,7 +120,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
       return;
     }
     setIsAnalyzingErrors(true);
-    setErrorAnalysis(undefined);
+    setErrorAnalysis(undefined); // Clear previous analysis
     try {
       const result = await detectErrorAnomaly({
         logs: pool.logs.join('\n'),
@@ -116,7 +150,10 @@ export function PoolDetails({ poolId }: { poolId: string }) {
 
   const storageUsagePercentage = pool ? (pool.allocated / pool.size) * 100 : 0;
 
+  console.log("PoolDetails: isLoading=", isLoading, "pool=", pool);
+
   if (isLoading) {
+    console.log("PoolDetails: Rendering loading state.");
     return (
        <div className="space-y-6 p-4 md:p-6">
         <Skeleton className="h-40 w-full" />
@@ -127,6 +164,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
   }
 
   if (!pool) {
+    console.log("PoolDetails: Rendering pool not found state.");
     return (
       <Card className="flex h-full items-center justify-center m-4 md:m-6">
         <div className="text-center text-muted-foreground">
@@ -138,6 +176,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     );
   }
 
+  console.log("PoolDetails: Rendering main content.");
   return (
     <div className="space-y-6 p-4 md:p-6">
       <Card>
@@ -172,17 +211,35 @@ export function PoolDetails({ poolId }: { poolId: string }) {
 
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold font-headline">Storage Overview</h3>
-                <div className="space-y-2 rounded-lg border p-4">
-                    <Progress value={storageUsagePercentage} className="w-full" />
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Used: <span className="font-bold text-foreground">{formatBytes(pool.allocated)}</span> of {formatBytes(pool.size)}</span>
-                        <span>Free: <span className="font-bold text-foreground">{formatBytes(pool.free)}</span></span>
-                    </div>
-                </div>
+                <Card>
+                    <CardContent className="pt-6 space-y-4">
+                        <div>
+                            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                                <span>{formatBytes(pool.allocated)} Used</span>
+                                <span>{formatBytes(pool.size)} Total</span>
+                            </div>
+                            <Progress value={storageUsagePercentage} className="w-full h-3" />
+                        </div>
+                        <div className="grid gap-4 grid-cols-1 md:grid-cols-3 text-center pt-4">
+                            <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground">Usage</p>
+                                <p className="text-2xl font-bold">{storageUsagePercentage.toFixed(1)}%</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground">Free</p>
+                                <p className="text-2xl font-bold">{formatBytes(pool.free)}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground">Total Capacity</p>
+                                <p className="text-2xl font-bold">{formatBytes(pool.size)}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors}>
+          <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors || !pool.logs || pool.logs.length === 0}>
             <Siren className="mr-2 h-4 w-4" />
             {isAnalyzingErrors ? 'Analyzing Errors...' : 'Detect Error Anomaly'}
           </Button>
@@ -213,7 +270,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
       <LogViewer logs={pool.logs} isLoading={isLoading} />
 
       <div className="flex justify-end mt-4">
-        <Button variant="destructive">
+        <Button variant="destructive" onClick={handleDeletePool}>
           <Trash2 className="h-5 w-5" />
           Delete Pool
         </Button>
@@ -221,3 +278,4 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     </div>
   );
 }
+

@@ -8,8 +8,9 @@
  * - AnalyzeSmartDataOutput - The return type for the analyzeSmartData function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
+import { getSettings } from '@/services/settings-service';
+import { z } from 'zod';
 
 const AnalyzeSmartDataInputSchema = z.object({
   smartData: z.string().describe('The SMART data from a disk.'),
@@ -22,29 +23,28 @@ const AnalyzeSmartDataOutputSchema = z.object({
 export type AnalyzeSmartDataOutput = z.infer<typeof AnalyzeSmartDataOutputSchema>;
 
 export async function analyzeSmartData(input: AnalyzeSmartDataInput): Promise<AnalyzeSmartDataOutput> {
-  return analyzeSmartDataFlow(input);
-}
+  const settings = await getSettings();
+  const apiKey = settings.googleAiApiKey;
 
-const prompt = ai.definePrompt({
-  name: 'analyzeSmartDataPrompt',
-  input: {schema: AnalyzeSmartDataInputSchema},
-  output: {schema: AnalyzeSmartDataOutputSchema},
-  prompt: `You are an expert in analyzing SMART data from hard drives and SSDs.
+  if (!apiKey) {
+    return { summary: 'AI analysis disabled. Please configure the Google AI API key in settings.' };
+  }
+
+  const model = googleAI({ apiKey }).model('gemini-1.5-flash');
+
+  const prompt = `You are an expert in analyzing SMART data from hard drives and SSDs.
   You will be provided with SMART data from a disk. Your task is to analyze this data and provide a plain English summary of any potential risks or predicted failures.
 
   SMART Data:
-  {{smartData}}
-  `,
-});
+  ${input.smartData}
+  `;
 
-const analyzeSmartDataFlow = ai.defineFlow(
-  {
-    name: 'analyzeSmartDataFlow',
-    inputSchema: AnalyzeSmartDataInputSchema,
-    outputSchema: AnalyzeSmartDataOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  const { candidates } = await model.generate({ prompt });
+
+  try {
+    const output = JSON.parse(candidates[0].message.text);
+    return AnalyzeSmartDataOutputSchema.parse(output);
+  } catch (e) {
+    return { summary: candidates[0].message.text };
   }
-);
+}

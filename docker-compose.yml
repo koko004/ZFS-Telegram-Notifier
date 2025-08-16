@@ -1,0 +1,35 @@
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-zfs_notifier}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-zfs_notifier}
+      - POSTGRES_HOST=db
+    command: >
+      sh -c "
+        npx wait-on tcp:db:5432 &&
+        npx tsx src/lib/schema.ts && 
+        npm start
+      "
+
+volumes:
+  postgres_data:

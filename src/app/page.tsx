@@ -96,7 +96,7 @@ export default function Home() {
             } else if (temp >= 60) {
                 fill = "hsl(var(--destructive))"; // Danger
             }
-            return { name: d.name, temperature: temp, fill };
+            return { name: d.model, temperature: temp, fill };
         });
 
 

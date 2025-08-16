@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, forwardRef } from "react";
+import { useState, forwardRef, useEffect } from "react";
 import type { Disk } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,16 @@ import { Skeleton } from "../ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import { getSettings } from "@/services/settings-service";
+import type { Settings } from "@/lib/types";
 
 const statusVariantMap: { [key in Disk["status"]]: "default" | "destructive" | "secondary" | "warning" } = {
   online: "default",
@@ -29,20 +39,25 @@ const DiskIcon = ({ name }: { name: string }) => {
   return <HardDrive className="text-primary" />;
 };
 
-function formatBytes(bytes: number, decimals = 2) {
-    if (bytes === 0) return '0 GB';
-    const k = 1000;
+function formatBytes(gigabytes: number, decimals = 2) {
+    if (gigabytes === 0) return '0 GB';
+    const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['GB', 'TB', 'PB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    const i = Math.floor(Math.log(gigabytes) / Math.log(k));
+    return parseFloat((gigabytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
 
 export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, ref) => {
   const [analysis, setAnalysis] = useState(disk.smartAnalysis);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    getSettings().then(setSettings);
+  }, []);
 
   const handleAnalyze = async () => {
     if (!disk.smartData) {
@@ -83,11 +98,20 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <DiskIcon name={disk.name} />
-          <span>{disk.name}</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate">{disk.model || "Unknown Model"}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{disk.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Badge variant={statusVariantMap[disk.status]} className="ml-auto capitalize">{disk.status}</Badge>
         </CardTitle>
         <CardDescription>
-          {disk.model}
+          {disk.path}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,7 +121,7 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                 Size
             </div>
             <div className="font-bold text-foreground">
-                {disk.size ? formatBytes(disk.size) : "N/A"}
+                {disk.size !== undefined ? formatBytes(disk.size) : "N/A"}
             </div>
         </div>
         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -106,7 +130,7 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                 Temperature
             </div>
             <div className={cn("font-bold", tempColorClass)}>
-                {disk.temperature ? `${disk.temperature}°C` : "N/A"}
+                {disk.temperature !== undefined ? `${disk.temperature}°C` : "N/A"}
             </div>
         </div>
         <div className="rounded-lg border p-3">
@@ -155,7 +179,7 @@ export const DiskInfo = forwardRef<HTMLDivElement, { disk: Disk }>(({ disk }, re
                 </ScrollArea>
             </DialogContent>
         </Dialog>
-        <Button onClick={handleAnalyze} disabled={isAnalyzing || !disk.smartData} className="w-full">
+        <Button onClick={handleAnalyze} disabled={isAnalyzing || !disk.smartData || !settings?.googleAiApiKey} className="w-full">
             <Cpu />
             {isAnalyzing ? "Analyzing..." : "Analyze"}
         </Button>

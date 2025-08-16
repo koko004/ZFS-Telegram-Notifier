@@ -17,6 +17,8 @@ import { mockPools } from "@/lib/mock-data";
 const addPoolSchema = z.object({
   remoteAddress: z.string().min(1, "Remote address is required."),
   poolName: z.string().min(1, "Pool name is required."),
+  username: z.string().min(1, "Username is required."),
+  password: z.string().min(1, "Password is required."),
 });
 
 type AddPoolFormValues = z.infer<typeof addPoolSchema>;
@@ -41,65 +43,71 @@ export function AddPoolDialog({ onPoolAdded }: AddPoolDialogProps) {
 
   const handleTestConnection = async () => {
     setIsTesting(true);
-    const { remoteAddress, poolName } = form.getValues();
-    
-    // Simulate API call to test connection
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const isSuccess = remoteAddress.includes('192') && poolName.length > 0;
+    const { remoteAddress, poolName, username, password } = form.getValues();
 
-    if (isSuccess) {
-      toast({
-        title: "Connection Successful",
-        description: `Successfully connected to ${poolName} at ${remoteAddress}.`,
+    try {
+      const response = await fetch('/api/test-connection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ remoteAddress, poolName, username, password }),
       });
-    } else {
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Connection Successful",
+          description: data.message,
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
         title: "Connection Failed",
-        description: "Could not connect. Check address and pool name.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
     }
+
     setIsTesting(false);
   };
 
   const handleAddPool = async (values: AddPoolFormValues) => {
-    setIsAdding(true);
-    try {
-        // This is a placeholder. In a real app, you would fetch real data
-        // from the remote server based on `values.remoteAddress` and `values.poolName`
-        // and create a new pool object.
-        const newPoolData = {
-            ...mockPools[0], // using mock data as a template
-            id: '', // Firestore will generate ID
-            name: values.poolName,
-            remoteAddress: values.remoteAddress,
-        };
-      
-      // The `id` is removed from the type before passing to the service
-      const { id, ...poolInput } = newPoolData;
+        setIsAdding(true);
+        try {
+            const newPoolData: Omit<PoolInput, 'status' | 'size' | 'allocated' | 'free' | 'vdevs' | 'logs'> = {
+                name: values.poolName,
+                remoteAddress: `${values.username}:${values.password}@${values.remoteAddress}`,
+            };
 
-      await addPool(poolInput);
-      
-      toast({
-        title: "Pool Added",
-        description: `Started monitoring ${values.poolName}.`,
-      });
-      onPoolAdded();
-      setIsOpen(false);
-      form.reset();
+          await addPool(newPoolData as PoolInput);
+          
+          toast({
+            title: "Pool Added",
+            description: `Started monitoring ${values.poolName}.`,
+          });
+          onPoolAdded();
+          setIsOpen(false);
+          form.reset();
 
-    } catch (error) {
-       toast({
-        title: "Failed to Add Pool",
-        description: "An error occurred while adding the new pool.",
-        variant: "destructive",
-      });
-      console.error(error);
-    } finally {
-      setIsAdding(false);
-    }
-  };
+        } catch (error) {
+           toast({
+            title: "Failed to Add Pool",
+            description: "An error occurred while adding the new pool.",
+            variant: "destructive",
+          });
+          console.error(error);
+        } finally {
+          setIsAdding(false);
+        }
+      };
 
 
   return (
@@ -140,6 +148,32 @@ export function AddPoolDialog({ onPoolAdded }: AddPoolDialogProps) {
                         <FormLabel className="text-right">Pool Name</FormLabel>
                         <FormControl className="col-span-3">
                             <Input placeholder="tank" {...field} />
+                        </FormControl>
+                        <FormMessage className="col-span-4 pl-24" />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Username</FormLabel>
+                        <FormControl className="col-span-3">
+                            <Input placeholder="root" {...field} />
+                        </FormControl>
+                        <FormMessage className="col-span-4 pl-24" />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                        <FormLabel className="text-right">Password</FormLabel>
+                        <FormControl className="col-span-3">
+                            <Input type="password" {...field} />
                         </FormControl>
                         <FormMessage className="col-span-4 pl-24" />
                     </FormItem>

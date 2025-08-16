@@ -1,7 +1,9 @@
 "use client";
 
-import { PoolDetails } from "@/components/dashboard/pool-details";
+import { useEffect, useState } from 'react';
+import { PoolDetails } from '@/components/dashboard/pool-details';
 import { useParams } from "next/navigation";
+import ErrorBoundary from "@/components/error-boundary";
 
 export default function PoolDetailsPage() {
   const params = useParams();
@@ -12,5 +14,9 @@ export default function PoolDetailsPage() {
     return <div>Loading...</div>;
   }
 
-  return <PoolDetails poolId={poolId} />;
+  return (
+    <ErrorBoundary>
+      <PoolDetails poolId={poolId} />
+    </ErrorBoundary>
+  );
 }
