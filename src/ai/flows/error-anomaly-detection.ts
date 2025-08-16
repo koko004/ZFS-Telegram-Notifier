@@ -1,14 +1,5 @@
 'use server';
 
-/**
- * @fileOverview A flow to detect anomalies in the rate of reported errors using GenAI-powered analysis.
- *
- * - detectErrorAnomaly - A function that handles the error anomaly detection process.
- * - DetectErrorAnomalyInput - The input type for the detectErrorAnomaly function.
- * - DetectErrorAnomalyOutput - The return type for the detectErrorAnomaly function.
- */
-
-import { googleAI } from '@genkit-ai/googleai';
 import { getSettings } from '@/services/settings-service';
 import { z } from 'zod';
 
@@ -35,7 +26,7 @@ export async function detectErrorAnomaly(input: DetectErrorAnomalyInput): Promis
         };
     }
 
-    const model = googleAI({ apiKey }).model('gemini-1.5-flash');
+    const model = 'gemini-1.5-flash';
 
     const prompt = `You are an expert system administrator specializing in detecting anomalies in ZFS pool logs.
     You will use the provided logs and baseline to determine if there is an anomaly in the rate of reported errors.
@@ -44,15 +35,37 @@ export async function detectErrorAnomaly(input: DetectErrorAnomalyInput): Promis
     Baseline: ${input.baseline}
 
     Determine if there is an anomaly in the logs compared to the baseline. Explain your reasoning.
-    Set the isAnomaly field to true if there is an anomaly, and false if there is not. Provide a detailed explanation in the explanation field.
+    Respond with a JSON object with two fields: "isAnomaly" (boolean) and "explanation" (string).
     `;
 
-    const { candidates } = await model.generate({ prompt });
-
     try {
-        const output = JSON.parse(candidates[0].message.text);
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: prompt
+                    }]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error.message || 'Failed to detect error anomaly');
+        }
+
+        const result = await response.json();
+        const text = result.candidates[0].content.parts[0].text;
+        // Clean the text to make sure it is a valid JSON
+        const cleanedText = text.replace(/```json/g, '').replace(/```/g, '');
+        const output = JSON.parse(cleanedText);
         return DetectErrorAnomalyOutputSchema.parse(output);
-    } catch (e) {
-        return { isAnomaly: false, explanation: candidates[0].message.text };
+    } catch (error: any) {
+        console.error("Error anomaly detection failed:", error);
+        throw new Error('Could not detect error anomaly. Please try again later.');
     }
 }

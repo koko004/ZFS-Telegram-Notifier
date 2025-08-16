@@ -322,6 +322,9 @@ export default function SettingsPage() {
                     </FormItem>
                   )}
                 />
+                <div className="flex items-center space-x-2">
+                    <Button type="button" variant="secondary" onClick={handleTestAIConnection} disabled={isTestingAI}>{isTestingAI ? "Testing..." : "Test Connection"}</Button>
+                </div>
               </CardContent>
             </Card>
 

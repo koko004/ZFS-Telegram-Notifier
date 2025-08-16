@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useEffect, createRef, RefObject, useCallback } from "react";
-import type { Pool, Disk, PoolStatus } from "@/lib/types";
+import type { Pool, Disk, PoolStatus, Settings } from "@/lib/types";
 import { getPool, deletePool } from "@/services/pool-service";
+import { getSettings } from "@/services/settings-service";
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorAnalysis, setErrorAnalysis] = useState(pool?.errorAnalysis);
   const [isAnalyzingErrors, setIsAnalyzingErrors] = useState(false);
+  const [settings, setSettings] = useState<Settings | null>(null);
   
   const { toast } = useToast();
   const router = useRouter();
@@ -85,12 +87,16 @@ export function PoolDetails({ poolId }: { poolId: string }) {
     setIsLoading(true);
     console.log("fetchPoolAndSettings: Starting fetch.");
     try {
-        const foundPool = await getPool(poolId);
+        const [foundPool, foundSettings] = await Promise.all([
+            getPool(poolId),
+            getSettings()
+        ]);
         setPool(foundPool);
+        setSettings(foundSettings);
         if (foundPool) {
           setErrorAnalysis(foundPool.errorAnalysis);
         }
-        console.log("fetchPoolAndSettings: Data fetched successfully.", foundPool);
+        console.log("fetchPoolAndSettings: Data fetched successfully.", foundPool, foundSettings);
     } catch(error) {
         console.error("fetchPoolAndSettings: Error during fetch.", error);
         toast({
@@ -239,7 +245,7 @@ export function PoolDetails({ poolId }: { poolId: string }) {
             </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors || !pool.logs || pool.logs.length === 0}>
+          <Button className="w-full" onClick={handleAnalyzeErrors} disabled={isAnalyzingErrors || !pool.logs || pool.logs.length === 0 || !settings || !settings.googleAiApiKey}>
             <Siren className="mr-2 h-4 w-4" />
             {isAnalyzingErrors ? 'Analyzing Errors...' : 'Detect Error Anomaly'}
           </Button>

@@ -1,18 +1,35 @@
+import { NextRequest, NextResponse } from 'next/server';
 
-import { NextResponse } from 'next/server';
-import { testGoogleAIConnection } from '@/services/ai-service';
-
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { apiKey } = await request.json();
-    const result = await testGoogleAIConnection(apiKey);
-    if (result.ok) {
-        return NextResponse.json(result);
-    } else {
-        return NextResponse.json(result, { status: 400 });
+    const { apiKey } = await req.json();
+
+    if (!apiKey) {
+      return NextResponse.json({ message: 'API key is required' }, { status: 400 });
     }
-  } catch (error) {
-    console.error('AI connection test endpoint failed:', error);
-    return NextResponse.json({ ok: false, message: 'An unexpected error occurred.' }, { status: 500 });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: 'test'
+          }]
+        }]
+      })
+    });
+
+    if (response.ok) {
+      return NextResponse.json({ message: 'API key is valid' }, { status: 200 });
+    } else {
+      const error = await response.json();
+      return NextResponse.json({ message: error.error.message || 'Invalid API key or network issue' }, { status: response.status });
+    }
+  } catch (error: any) {
+    console.error('AI connection test failed:', error);
+    return NextResponse.json({ message: error.message || 'An unexpected error occurred' }, { status: 500 });
   }
 }

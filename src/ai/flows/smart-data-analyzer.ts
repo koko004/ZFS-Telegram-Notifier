@@ -1,14 +1,5 @@
 'use server';
 
-/**
- * @fileOverview This file contains the Genkit flow for analyzing SMART data from disks.
- *
- * - analyzeSmartData - A function that analyzes SMART data and provides a summary of potential risks.
- * - AnalyzeSmartDataInput - The input type for the analyzeSmartData function.
- * - AnalyzeSmartDataOutput - The return type for the analyzeSmartData function.
- */
-
-import { googleAI } from '@genkit-ai/googleai';
 import { getSettings } from '@/services/settings-service';
 import { z } from 'zod';
 
@@ -30,8 +21,6 @@ export async function analyzeSmartData(input: AnalyzeSmartDataInput): Promise<An
     return { summary: 'AI analysis disabled. Please configure the Google AI API key in settings.' };
   }
 
-  const model = googleAI({ apiKey }).model('gemini-1.5-flash');
-
   const prompt = `You are an expert in analyzing SMART data from hard drives and SSDs.
   You will be provided with SMART data from a disk. Your task is to analyze this data and provide a plain English summary of any potential risks or predicted failures.
 
@@ -39,12 +28,31 @@ export async function analyzeSmartData(input: AnalyzeSmartDataInput): Promise<An
   ${input.smartData}
   `;
 
-  const { candidates } = await model.generate({ prompt });
-
   try {
-    const output = JSON.parse(candidates[0].message.text);
-    return AnalyzeSmartDataOutputSchema.parse(output);
-  } catch (e) {
-    return { summary: candidates[0].message.text };
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error.message || 'Failed to analyze SMART data');
+    }
+
+    const result = await response.json();
+    const summary = result.candidates[0].content.parts[0].text;
+    return { summary };
+  } catch (error: any) {
+    console.error("SMART analysis failed:", error);
+    throw new Error('Could not analyze SMART data. Please try again later.');
   }
 }
