@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/logo.svg" alt="logo" width="200" height="200">
+  <img src="public/logo.svg" alt="logo" width="100" height="100">
 </div>
 
 # ZFS Telegram Notifier
