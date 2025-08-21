@@ -134,7 +134,6 @@ export function PoolDetails({ poolId }: { poolId: string }) {
         baseline: 'No errors reported in the last 24 hours.',
       });
       setErrorAnalysis(result);
-      // Here you would also save the analysis to Firestore
     } catch (error) {
       console.error("Error analysis failed:", error);
       toast({
