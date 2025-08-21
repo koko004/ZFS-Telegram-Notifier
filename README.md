@@ -1,4 +1,4 @@
-<table>
+<table border="0">
   <tr>
     <td><img src="public/logo.svg" alt="logo" width="80" height="80"></td>
     <td valign="middle"><h1>ZFS Telegram Notifier</h1></td>
