@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="public/logo.svg" alt="logo" width="200" height="200">
+</div>
+
 # ZFS Telegram Notifier
 
 ZFS Telegram Notifier is a powerful, self-hosted application designed to monitor ZFS filesystems on remote servers. It provides a clean web-based dashboard to visualize the health of your ZFS pools and sends notifications to your Telegram account when issues are detected.
